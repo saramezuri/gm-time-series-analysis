@@ -24,30 +24,6 @@ The data used for this project is the monthly sales data for the General Motors 
 
 [General Motors Sales Data](https://www.goodcarbadcar.net/ford-motor-company-us-sales-figures/) (click here for the data)
 
-```{r data_collection}
-# Read in the data
-
-setwd("C:/Users/saram/Desktop/OU/Winter 2023/STA 5330 (Time series I)/Project")
-
-mydata <- read.csv("SALES DATA.csv")
-
-#Convert the data
-mydata$Date<-as.Date(mydata$Date, format="%m/%d/%Y")
-
-# Print the first 6 rows of the data frame
-head(mydata)
-
-# Print the last 6 rows of the data frame
-tail(mydata)
-
-# Check the structure of the data
-str(mydata)
-
-# Check the summary of the data
-summary(mydata)
-
-```
-
 To evaluate our model's predictions and compare them with actual values, we temporarily exclude the most recent 24 months. Subsequently, we will add them later on. 
 
 ```{r removing_last_2_years}
