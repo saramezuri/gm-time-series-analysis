@@ -62,7 +62,7 @@ tail(Date_Predict)
 str(Date_Predict)
 
 ```
-![Data](data.jpeg)
+![Data](pictures/data.jpeg)
 
 # Exploratory Data Analysis
 
