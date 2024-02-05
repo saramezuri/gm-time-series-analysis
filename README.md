@@ -1,13 +1,6 @@
 # A Time Series Analysis of General Motors Company Monthly Sales in the US Market
 ## by Sara Mezuri
 
----
-title: "A Time Series Analysis of General Motors Company Monthly Sales in the US Market"
-author: "Sara Mezuri"
-date: "2023-04-24"
-output: pdf_document
----
-
 # Introduction 
 
 The American automotive industry is known to be one of the largest and most competitive markets globally, where General Motors Company is among the leading players who have been competing against each other for decades. The aim of this project is to perform a time series analysis of the General Motors Company monthly sales in the US market, for the past 2 decades which will provide insights into their market position, allowing us to uncover patterns, trends, and fluctuations within sequential data, enabling a deeper understanding of temporal relationships. It allows us to make predictions based on historical patterns, facilitating informed decision-making and strategic planning. This analytical approach is particularly valuable in forecasting future trends, identifying anomalies, and extracting meaningful insights from time-ordered datasets.
@@ -31,39 +24,191 @@ The data used for this project is the monthly sales data for the General Motors 
 
 [General Motors Sales Data](https://www.goodcarbadcar.net/ford-motor-company-us-sales-figures/) (click here for the data)
 
+```{r data_collection}
+# Read in the data
+
+setwd("C:/Users/saram/Desktop/OU/Winter 2023/STA 5330 (Time series I)/Project")
+
+mydata <- read.csv("SALES DATA.csv")
+
+#Convert the data
+mydata$Date<-as.Date(mydata$Date, format="%m/%d/%Y")
+
+# Print the first 6 rows of the data frame
+head(mydata)
+
+# Print the last 6 rows of the data frame
+tail(mydata)
+
+# Check the structure of the data
+str(mydata)
+
+# Check the summary of the data
+summary(mydata)
+
+```
+
 To evaluate our model's predictions and compare them with actual values, we temporarily exclude the most recent 24 months. Subsequently, we will add them later on. 
 
-![GM Original TS]()
+```{r removing_last_2_years}
+
+# Length of the GM Sales Data column
+
+n <- length(mydata$GM)
+print(n)
+
+# Create the data without the last 24 months 
+
+GM_Short <- mydata$GM[1:(n-24)]
+head(GM_Short)
+tail(GM_Short)
+
+str(GM_Short)
+
+Date_Short <- mydata$Date[1:(n-24)]
+head(Date_Short)
+tail(Date_Short)
+
+str(Date_Short)
+
+# Create the data containing only the last 24 months
+
+GM_Predict <- mydata$GM[(n-23):n]
+head(GM_Predict)
+tail(GM_Predict)
+
+str(GM_Predict)
+
+Date_Predict <- mydata$Date[(n-23):n]
+head(Date_Predict)
+tail(Date_Predict)
+
+str(Date_Predict)
+
+```
 
 # Exploratory Data Analysis
 
 ## Trend, Seasonality and Stationarity Analysis
 
-Our objective is to determine the stationarity of the original time series and detect any existing trends or seasonality.
+```{r,  fig.width=8, fig.height=6, fig.cap="Original Monthly Sales Plot since 2005"}
 
-A stationary time series is one whose statistical properties, such as the mean and variance, do not change over time, while a non-stationary time series has statistical properties that are time-dependent and can vary over time.
+# Create the sales plot
+
+gm <- ts(mydata$GM) # create a time series object for GM Monthly Sales
+
+plot(mydata$Date, gm, 
+     type = "o", xlab = "Date", ylab = "Monthly Sales", main = "Original General Motors Time Series")
+
+```
+
+![Original General Motors Time Series]()
+
+```{r, fig.width=8, fig.height=6, fig.cap="Shorten Monthly Sales Plot"}
+
+# Create the plot containing data from January 2005 to December 2020
+
+gm_ts <- ts(GM_Short) # create a time series object for GM Shorten Monthly Sales
+
+plot(Date_Short, gm_ts, 
+     type = "o", xlab = "Date", ylab = "Shorten Monthly Sales", main = "General Motors Shorten Time Series")
+
+```
+![Shorten Monthly Sales Plot]()
+
+There is a change in trend and seasonality to be seen from the plot (fig. 2). As a result, the time series of sales do not appear to be stationary.  A stationary time series is one whose statistical properties, such as the mean and variance, do not change over time, while a non-stationary time series has statistical properties that are time-dependent and can vary over time.
+
+Furthermore, we can proceed with the ADF test.
+
+```{r, warning = FALSE}
+
+library(tseries)
+
+# Perform the Augmented Dickey-Fuller test
+
+test <- adf.test(gm_ts)
+
+# Print results
+
+print(test)
+
+cat("p-value: ", test$p.value, "\n")
+
+```
+
+Clearly, from the ADF test result, the $p$-value for the time series is significantly greater than the significance level $\alpha = 0.05$, thus we fail to reject the null hypothesis. 
 
 Plotting the ACF and PACF graphs can also help understanding the time series better. In time series analysis, ACF (Autocorrelation Function) and PACF (Partial Autocorrelation Function) plots are often used to determine the order of Autoregressive (AR) and Moving Average (MA) models.
-
-![ACF and PACF plots]()
 
 The ACF plot displays the relationship between the values of a time series and its lagged values. The ACF plot can be used to identify the order of an MA model by observing the number of lags with significant autocorrelation.
  
 The PACF plot displays the relationship between a time series and its lag values. The PACF plot can be used to identify the order of an AR model by observing the number of lags with significant partial autocorrelation.
 
+```{r, fig.width=8, fig.height=6, fig.cap="ACF and PACF graphs"}
+
+# Plot the acf and pacf of GM
+
+par(mfrow = c(1,2))
+
+acf(gm_ts, lag.max = 48)
+
+pacf(gm_ts, lag.max = 48)
+
+```
+![ACF and PACF graphs]()
+
 ## Transforming the Data 
 
-The next step is taking the logarithm of the time series. This is a common data transformation technique used in time series analysis. In our data set, we notice a variability in the data over time, which makes it difficult to forecast the series accurately. Taking the logarithm of the series can help to stabilize the variance, by compressing the range of values for large observations and expanding the range for small observations.
+The next step is taking the logarithm of the time series. This is a common data transformation technique used in time series analysis. In our data set, we notice a variability in the data overtime, which makes it difficult to forecast the series accurately. Taking the logarithm of the series can help to stabilize the variance, by compressing the range of values for large observations and expanding the range for small observations.
 
-![GM Logged TS]()
+```{r, fig.width=8, fig.height=6, fig.cap="Monthly Sales Logged Time Series"}
 
-Transformations such as logarithms can help to stabilize the variance of a time series. But when it comes to the mean of time series, differencing can help stabilize the mean of a time series by removing changes in the level of a time series and therefore eliminating (or reducing) trend and seasonality.
+# Take the log of the time series 
 
-The differenced series is the change between consecutive observations in the original series and can be written as
+gm_ts_log <- log(gm_ts)
 
-$$ X_t ' = X_{t+1} - X_t $$ where $X_t$ is a time series. 
+# Plot the logged time series 
 
-![GM Differenced TS]()
+plot(Date_Short, gm_ts_log, 
+     type = "l", xlab = "Date", ylab = "Monthly Sales", main = "General Motors Logged Time Series")
+
+```
+![Monthly Sales Logged Time Series]()
+
+Transformations such as logarithms can help to stabilize the variance of a time series. But when it comes to the mean of time series, differencing can help stabilize the mean of a time series by removing changes in the level of a time series, and therefore eliminating (or reducing) trend and seasonality.
+
+The differenced series is the change between consecutive observations in the original series, and can be written as
+
+$$ X_t ' = X_{t+1} - X_t $$
+
+where $X_t$ is a time series. 
+
+```{r, fig.width=8, fig.height=6, fig.cap="First-Order Differenced Time Series"}
+
+# Take the first-order difference of the logged time series 
+
+gm_diff1 <- diff(gm_ts_log, lag = 1)
+
+# Plot the first-difference time series
+     
+plot(gm_diff1 , type = 'l',
+     xlab = "time", ylab = "first-order difference", main = "GM Differenced Time Series")
+
+```
+![First-Order Differenced Time Series]()
+
+```{r, fig.width=8, fig.height=6, fig.cap="ACF and PACF of First-Order Differenced Time Series"}
+
+# Plot the ACF and PACF of the first-difference time series
+
+par(mfrow = c(1, 2))
+
+acf(gm_diff1, lag.max = 48)
+
+pacf(gm_diff1, lag.max = 48)
+
+```
+![ACF and PACF of First-Order Differenced Time Series]()
 
 At times, the differenced data might not appear to be stationary, and it might be required to perform a second differencing to achieve a stationary series: 
 
@@ -75,9 +220,23 @@ Seasonality in time series refers to the pattern of regular and predictable fluc
 
 In our case, the PACF shows a spike at lag 12, which may suggest seasonality and the ACF shows a strong correlation at lags 12,24,36 (fig.3 and fig.6).
 
-If a time series is seasonal at lag = 12, it means that there is a repeating pattern or regular fluctuation in the data that occurs every 12 time unit. In the context of monthly data, a seasonal pattern at lag = 12 indicates a yearly seasonality, where the same or similar pattern tends to repeat every 12 months. Therefore, a seasonal pattern at lag = 12 suggests that the time series exhibits a recurring behavior on an annual basis. Understanding seasonality at lag = 12 allows to account for these recurring patterns when developing forecasting models.
+If a time series is seasonal at lag = 12, it means that there is a repeating pattern or regular fluctuation in the data that occurs every 12 time units. In the context of monthly data, a seasonal pattern at lag = 12 indicates a yearly seasonality, where the same or similar pattern tends to repeat every 12 months. Therefore, a seasonal pattern at lag = 12 suggests that the time series exhibits a recurring behavior on an annual basis. Understanding seasonality at lag = 12 allows to account for these recurring patterns when developing forecasting models.
 
 Let's look at a seasonal sales boxplot to understand better the seasonality.
+
+```{r, fig.width=8, fig.height=6, fig.cap="Seasonal Boxplot"}
+
+# Create a data frame with date and sales
+df <- data.frame(Date = Date_Short, Sales = gm_ts)
+
+# Extract month and year from the date
+df$Month <- format(df$Date, "%m")
+df$Year <- format(df$Date, "%Y")
+
+# Create a boxplot to visualize seasonality
+boxplot(Sales ~ Month, data = df, xlab = "Month", ylab = "Monthly Sales", main = "Seasonal Boxplot")
+
+```
 
 ![Seasonal Boxplot]()
 
@@ -85,15 +244,59 @@ This graph shows a visual of any recurring seasonal patterns or fluctuations. Fo
 
 If $S = 12$, which occurs with monthly data, a seasonal difference is $(1-B^{12}) X_t = X_t - X_{t-12}$. Seasonal differencing removes seasonal trend and can also get rid of a seasonal random walk type of non-stationarity. 
 
+```{r, fig.width=8, fig.height=6, fig.cap="Differenced Time Series at lag 12"}
+
+# Take the difference at lag 12 of the time series 
+
+gm_diff2 <- diff(gm_diff1, lag = 12)
+
+# Plot the first-difference time series
+     
+plot(gm_diff2 , type = 'l', xlab = "time", ylab = "difference at lag 12", 
+     main = "GM Differenced Time Series at lag 12")
+
+```
 ![Differenced Time Series at lag 12]()
 
+
+```{r, fig.width=8, fig.height=6, fig.cap="ACF and PACF of Differenced Time Series at lag = 12"}
+
+# Plot the ACF and PACF of the difference time series at lag = 12
+
+par(mfrow = c(1,2))
+
+acf(gm_diff2, lag.max = 48)
+
+pacf(gm_diff2, lag.max = 48)
+
+```
 ![ACF and PACF of Differenced Time Series at lag = 12]()
+
+We run the ADF test again to make sure that now we have a stationary series. 
+
+```{r, warning = FALSE}
+
+library(tseries)
+
+# Perform the Augmented Dickey-Fuller test
+
+test_1 <- adf.test(gm_diff2)
+
+# Print results
+
+print(test_1)
+
+cat("p-value: ", test_1$p.value, "\n")
+
+```
+
+As we can tell $p = 0.01 < 0.05$, thus we reject the null hypothesis, i.e the time series is now stationary. 
 
 # Model Specification
 
 ## Rationale for choosing the model
 
-Clearly, the time series represent a SARIMA $(p,d,q)x(P,D,Q)$ model. A SARIMA model is an ARIMA model with a seasonal component, where 
+Clearly, the time series represents a SARIMA $(p,d,q)x(P,D,Q)$ model. A SARIMA model is an ARIMA model with a seasonal component, where 
 
 - $p$ and seasonal $P$ indicate the autoregressive order. 
 
@@ -115,12 +318,11 @@ and the seasonal components are
 
 - seasonal MA: $\Theta(z) = 1 + \Theta_1z+ \ldots + \Theta_qz^q$.
 
+For our both time series, $D = 1$ and $d = 1$. To determine $p$, $q$, $P$, and $Q$, we can refer to the ACF and PACF plots.
 
-For our both time series, $D = 1$ and $d = 1$. To determine $p$, $q$, $P$ and $Q$, we can refer to the ACF and PACF plots.
+From the ACF and PACF plots, for the sales time series, we notice a significant spike on the ACF plot before the first seasonal $lag = 12$ and three noticeable lags on the PACF plot at lags $12, 24, 36$. This may suggest that $P = 3$ and $Q = 1$.
 
-From the ACF and PACF plots, for the sales time series we notice a significant spike on the ACF plot before the first seasonal $lag = 12$ and three noticeable lags on the PACF plot at lags $12, 24, 36$. This may suggest that $P = 3$ and $Q = 1$.
-
-However, in this case, basing my analysis only on the ACF and PACF plots,may result are in uncertain and unsufficient conclusions.
+However, in this case, basing my analysis only on the ACF and PACF plots may result in uncertain and insufficient conclusions.
 
 To determine the best $p$, $P$, $q$ and $Q$, we use the following code
 
@@ -179,15 +381,15 @@ cat("Minimum AIC =", min_aic_gm, "\n")
 
 ```
 
-The output of the code includes the AIC, SSE and the p-value of each fitted model. The AIC (Akaike Information Criterion) is calculated as $$AIC = 2k - 2ln(L),$$ where $k$ is the number of parameters in the model, and $L$ is the likelihood function of the model. The AIC is a measure of the quality of a statistical model, with lower values indicating better fit. The SSE is the sum of squared errors of the fitted model, which measures how well the model fits the data. 
+The output of the code includes the AIC, SSE, and the p-value of each fitted model. The AIC (Akaike Information Criterion) is calculated as $$AIC = 2k - 2ln(L),$$ where $k$ is the number of parameters in the model, and $L$ is the likelihood function of the model. The AIC is a measure of the quality of a statistical model, with lower values indicating better fit. The SSE is the sum of squared errors of the fitted model, which measures how well the model fits the data. 
 
 The Ljung-Box test is a statistical test for autocorrelation in a time series. The test is used to assess whether the residuals (i.e., the differences between the observed values and the values predicted by a model) of a time series model are independently distributed. Therefore, the null hypothesis of the Ljung-Box test is that the residuals of the fitted model are independently distributed. 
 
 Regarding the p-value of the Ljung-Box test, if the p-value of the Ljung-Box test is small ( less than 0.05), this provides evidence against the null hypothesis. Hence, a small p-value suggests that the model may not be a good fit for the data.
 
-Conversely, if the p-value of the Ljung-Box test is large (greater than 0.05), this suggests that there is no evidence against the null hypothesis, and that the residuals are independently distributed. In this case, the model is likely a good fit for the data.
+Conversely, if the p-value of the Ljung-Box test is large (greater than 0.05), this suggests that there is no evidence against the null hypothesis and that the residuals are independently distributed. In this case, the model is likely a good fit for the data.
 
-From the results of the code above, we choose as the best fitting model for the time series to be $(0,1,2)x(0,1,1)$ with the smallest $AIC = -148.6715$ and $p-value =  0.6984616$ from Ljung-Box test. 
+From the results of the code above, we choose the best fitting model for the time series to be $(0,1,2)x(0,1,1)$ with the smallest $AIC = -148.6715$ and $p-value =  0.6984616$ from Ljung-Box test. 
 
 # Model Fitting
 
@@ -218,9 +420,29 @@ where $$Z_t \sim (0,  0.04101)$$
 
 ## Residual Analysis
 
-As mentioned above, residuals in time series are what is left over after fitting a model. For most of the time series models, residuals are equal to difference between the observation and corresponding fitted values. To make sure that the models we have choosen are a good fit, we need to make sure that the residuals are white noise. 
+As mentioned above, residuals in time series are what is left over after fitting a model. For most of the time series models, residuals are equal to the difference between the observation and corresponding fitted values. To make sure that the models we have choosen are a good fit, we need to make sure that the residuals are white noise. 
 
-![Residual Analysis]()
+```{r, fig.width=8, fig.height=12, fig.cap="Residual Analysis for gm.fit model"}
+
+library(TSA)
+
+residual_analysis <- function(model, standardized = TRUE) {
+  residuals <- if (standardized) rstandard(model) else residuals(model)
+  par(mfrow = c(2, 2))
+  plot(residuals, type = 'o', ylab = 'Standardized Residuals', 
+       main = 'Time Series Plot of Standardized Residuals')
+  abline(h = 0)
+  hist(residuals, main = 'Histogram of Standardized Residuals')
+  qqnorm(residuals, main = 'Normal Q-Q Plot of Standardized Residuals')
+  qqline(residuals, col = 2)
+  acf(residuals, main = 'ACF of Standardized Residuals')
+  shapiro.test(residuals) 
+}
+
+residual_analysis(model = gm.fit)
+
+```
+![Residual Analysis for gm.fit model]()
 
 From the residual analysis, we conclude the following, for the chosen model:
 
@@ -238,10 +460,53 @@ Thus, we can say that the model we chose, fits the best.
 
 The last step would be forecasting the monthly sales for the General Motors Company for the next $24$ months. 
 
-![The forecasted values of General Motors Time Series for 24 months]
+```{r, fig.width=8, fig.height=6, fig.cap="The forecasted values of General Motors Time Series for 24 months"}
+
+# Predict log-transformed GM time series 24-time points ahead
+
+n.ahead <- 24
+x.forecast_2 <- predict(gm.fit, n.ahead = n.ahead)
+
+# Plot the forecasts with prediction intervals 
+UU <- x.forecast_2$pred + 1.96 * x.forecast_2$se
+LL <- x.forecast_2$pred - 1.96 * x.forecast_2$se
+
+# Plot the log-transformed time series
+plot((length(gm_diff2) + 1):(length(gm_diff2) + n.ahead),
+     x.forecast_2$pred,
+     xlim = c(1, length(gm_diff2) + n.ahead),
+     ylim = c(min(gm_diff2, UU, LL), max(gm_diff2, UU, LL)),
+     col = "blue",
+     type = "l",
+     xlab = "Time in Months",
+     ylab = "Log-Transformed GM",
+     main = "Log-Transformed Time Series and Forecast")
+
+lines((length(gm_diff2) + 1):(length(gm_diff2) + n.ahead), UU,
+      col = "green", lty = "dashed", type = "l")
+lines((length(gm_diff2) + 1):(length(gm_diff2) + n.ahead), LL,
+      col = "green", lty = "dashed", type = "l")
+lines(1:length(gm_diff2), gm_diff2, col = "red", type = "l")
+
+# Plot the original time series
+plot((length(gm) + 1):(length(gm) + n.ahead),
+     exp(x.forecast_2$pred),
+     xlim = c(1, length(gm) + n.ahead),
+     ylim = c(min(gm, exp(UU), exp(LL)), max(gm, exp(UU), exp(LL))),
+     col = "blue",
+     type = "l",
+     xlab = "Time in Months",
+     ylab = "Original GM",
+     main = "Original Time Series and Forecast")
+
+lines((length(log(gm)) + 1):(length(log(gm)) + n.ahead), exp(UU), col = "blue", lty = "dashed")
+lines((length(gm) + 1):(length(gm) + n.ahead), exp(LL), col = "blue", lty = "dashed")
+lines(1:length(gm), gm, col = "red")
+
+```
+![The forecasted values of General Motors Time Series for 24 months]()
 
 \newpage
-
 
 # Conclusions 
 
@@ -261,7 +526,6 @@ In contrast to the initial data available for this timeframe, variations are not
 
 
 \newpage
-
 
 # References
 
