@@ -256,8 +256,6 @@ The forecasting section provides a glimpse into the future by predicting General
 In contrast to the initial data available for this timeframe, variations are noticeable, but it appears that the prediction intervals encompass the original data. This implies that the prediction error is likely to fall within the specified interval.
 
 
-\newpage
-
 # References
 
 1. Brockwell, Peter J., Davis, Richard A. (2016). Introduction to Time Series and Forecasting, Third Edition
