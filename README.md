@@ -68,7 +68,9 @@ $$ X_t ' = X_{t+1} - X_t $$ where $X_t$ is a time series.
 
 At times, the differenced data might not appear to be stationary, and it might be required to perform a second differencing to achieve a stationary series: 
 
-$$ X_t '' = X_{t+1} ' - X_t '.$$ In our case, that step is not necessary. 
+$$ X_t '' = X_{t+1} ' - X_t '.$$ 
+
+In our case, that step is not necessary. 
 
 Furthermore, in the case of a stationary time series at $lag = h$, it might be required to perform another differencing at $lag = h$. Seasonal differencing is defined as a difference between a value and a value with lag that is a multiple of $S$.
 
