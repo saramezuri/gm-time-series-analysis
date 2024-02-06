@@ -48,7 +48,7 @@ The ACF plot displays the relationship between the values of a time series and i
  
 The PACF plot displays the relationship between a time series and its lag values. The PACF plot can be used to identify the order of an AR model by observing the number of lags with significant partial autocorrelation.
 
-![ACF and PACF graphs](pictures/acf-pacf-original/jpeg)
+![ACF and PACF graphs](pictures/acf-pacf-original.jpeg)
 
 ## Transforming the Data 
 
