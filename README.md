@@ -60,7 +60,9 @@ Transformations such as logarithms can help to stabilize the variance of a time 
 
 The differenced series is the change between consecutive observations in the original series and can be written as
 
-$$ X_t ' = X_{t+1} - X_t $$ where $X_t$ is a time series. 
+$$ X_t ' = X_{t+1} - X_t $$ 
+
+where $X_t$ is a time series. 
 
 ![First-Order Differenced Time Series](pictures/gm-differenced-ts.jpeg)
 
